@@ -494,34 +494,6 @@
         const auth = firebase.auth();
         const database = firebase.database();
     
-        // Verificar se o usuário já está autenticado
-        auth.onAuthStateChanged(user => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const fromHome = urlParams.get('fromHome');
-            const error = urlParams.get('error');
-            
-            // Mostrar mensagem de erro se houver
-            if (error) {
-                errorMessage.textContent = 'Ocorreu um erro ao carregar a página. Tente novamente.';
-            }
-            
-            // Só redirecionar se não vier de um redirecionamento com erro
-            if (user && !error) {
-                localStorage.setItem('user', JSON.stringify({
-                    uid: user.uid,
-                    email: user.email
-                }));
-                // Redirecionar com timeout para evitar problemas
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 100);
-            } else {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-                recoverForm.style.display = 'none';
-            }
-        });
-            
         // Form Elements
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');

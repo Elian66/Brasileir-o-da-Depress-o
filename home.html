@@ -425,21 +425,6 @@
             pastRounds: null
         };
 
-        // Verificar autenticação
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) {
-            // Adicionar parâmetro para evitar loop
-            window.location.href = 'index.html?fromHome=true';
-            // Parar a execução adicional
-            throw new Error('Redirecionando para login');
-        }
-
-        window.addEventListener('error', (event) => {
-            console.error('Erro na página:', event.error);
-            // Redirecionar para login com parâmetro diferente
-            window.location.href = 'index.html?error=true';
-        });
-
         // Logout functionality
         document.getElementById('logout-button').addEventListener('click', () => {
             auth.signOut().then(() => {
