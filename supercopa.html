@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supercopa - Detalhes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f0f2f5; 
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            margin-right: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .group-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .group-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            margin-right: 5px;
+            border-radius: 4px;
+        }
+        .group-tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .stage-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 15px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .standings-table th, .standings-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        .standings-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .team-logo {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .rounds-tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .round-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            margin-right: 5px;
+            border-radius: 4px;
+        }
+        .round-tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .matches-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .match-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+        .match-status {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .match-players {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .match-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .match-player img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 0;
+            margin-bottom: 5px;
+        }
+        .match-player p {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .match-group {
+            font-size: 12px;
+            color: #888;
+        }
+        .match-result {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .match-result p {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        .final-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .team-logo-final {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .vs {
+            font-size: 24px;
+            font-weight: bold;
+            margin-left: 32px;
+            margin-right: 32px;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Supercopa</h1>
+        <div class="tabs">
+            <div class="tab active" data-stage="grupos">Fase de Grupos</div>
+            <div class="tab" data-stage="quartas">Quartas de Final</div>
+            <div class="tab" data-stage="semis">Semifinais</div>
+            <div class="tab" data-stage="final">Final</div>
+        </div>
+
+        <div id="grupos-stage-content">
+            <div class="group-tabs">
+                <div class="group-tab active" data-group="group1">Grupo A</div>
+                <div class="group-tab" data-group="group2">Grupo B</div>
+                <div class="group-tab" data-group="group3">Grupo C</div>
+                <div class="group-tab" data-group="group4">Grupo D</div>
+            </div>
+
+            <div class="grid-container">
+                <div id="group-standings" class="stage-content">
+                    <table class="standings-table" id="group-standings-table">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Jogador</th>
+                                <th>Pontos</th>
+                                <th>Jogos</th>
+                                <th>Vitórias</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Standings will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="rounds-container" class="stage-content">
+                    <div class="rounds-tabs">
+                        <!-- Rounds tabs will be dynamically populated -->
+                    </div>
+                    <div id="matches-container" class="matches-container">
+                        <!-- Matches will be dynamically populated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                <!-- Quartas de Final Stage -->
+                <div class="stage-content" id="quartas-content" style="display:none;">
+                    <h2>Quartas de Final</h2>
+                    <div id="quarters-matches" class="matches-container">
+                        <!-- Matches will be dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Semifinais Stage -->
+                <div class="stage-content" id="semis-content" style="display:none;">
+                    <h2>Semifinais</h2>
+                    <div id="semis-matches" class="matches-container">
+                        <!-- Matches will be dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Final Stage -->
+                <div class="stage-content" id="final-content" style="display:none;">
+                    <h2>Final</h2>
+                    <div id="final-match-info" class="final-card">
+                        <div class="team-logo-container">
+                            <img id="home-team-logo" class="team-logo-final" src="" alt="Escudo do time">
+                            <p id="home-team-name">A Definir</p>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team-logo-container">
+                            <img id="away-team-logo" class="team-logo-final" src="" alt="Escudo do time">
+                            <p id="away-team-name">A Definir</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBrIiwL2sUVEPc8YBzdkJxPVyVVC5QN1M",
+            authDomain: "brdepre.firebaseapp.com",
+            databaseURL: "https://brdepre-default-rtdb.firebaseio.com",
+            projectId: "brdepre",
+            storageBucket: "brdepre.firebasestorage.app",
+            messagingSenderId: "1077826896098",
+            appId: "1:1077826896098:web:abe2b07a280a4852649ebb",
+            measurementId: "G-4JXFEZ8DW6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Global variables
+        let users = {};
+        let teams = {};
+        let groupPlayers = {};
+        let currentGroup = 'group1';
+        let currentRound = null;
+
+        // Fetch teams and users
+        function fetchTeamsAndUsers() {
+            const teamsRef = database.ref('teams');
+            const usersRef = database.ref('users');
+            const groupsRef = database.ref('tournaments/supercopa/groups');
+
+            return Promise.all([
+                teamsRef.once('value'),
+                usersRef.once('value'),
+                groupsRef.once('value')
+            ]).then(([teamsSnapshot, usersSnapshot, groupsSnapshot]) => {
+                teams = teamsSnapshot.val() || {};
+                users = usersSnapshot.val() || {};
+                
+                // Extract group players
+                const groups = groupsSnapshot.val();
+                if (groups) {
+                    groupPlayers = {
+                        group1: groups.group1 || [],
+                        group2: groups.group2 || [],
+                        group3: groups.group3 || [],
+                        group4: groups.group4 || []
+                    };
+                }
+            });
+        }
+
+        // Tab navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Reset active tabs and hide all stage contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.stage-content').forEach(c => c.style.display = 'none');
+
+                // Activate current tab and show its content
+                tab.classList.add('active');
+                const stage = tab.getAttribute('data-stage');
+                document.getElementById(`${stage}-content`).style.display = 'block';
+
+                // Load stage-specific data
+                loadStageData(stage);
+            });
+        });
+
+        // Group tab navigation (for Groups stage)
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('group-tab')) {
+                // Reset group tabs
+                document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                currentGroup = e.target.getAttribute('data-group');
+                loadGroupStandings(currentGroup);
+                loadGroupRounds(currentGroup);
+            }
+        });
+
+        // Round tab navigation
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('round-tab')) {
+                // Reset round tabs
+                document.querySelectorAll('.round-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                currentRound = e.target.getAttribute('data-round');
+                loadRoundMatches(currentGroup, currentRound);
+            }
+        });
+
+        // Load groups stage data
+        function loadGroupRounds(group) {
+            const roundsRef = database.ref(`tournaments/supercopa/groups/rounds`);
+            const roundsContainer = document.querySelector('.rounds-tabs');
+            const matchesContainer = document.getElementById('matches-container');
+
+            roundsRef.once('value', (snapshot) => {
+                const rounds = snapshot.val();
+                
+                roundsContainer.innerHTML = '';
+                matchesContainer.innerHTML = '';
+
+                if (!rounds) {
+                    matchesContainer.innerHTML = '<p>Nenhuma rodada criada ainda.</p>';
+                    return;
+                }
+
+                // Converte para array e ordena por timestamp ou outra propriedade se existir
+                const roundsArray = Object.entries(rounds)
+                    .map(([id, round]) => ({ id, ...round }))
+                    // Ordena por timestamp se existir, caso contrário mantém a ordem de criação
+                    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                // Encontra a rodada ativa
+                let activeRoundIndex = roundsArray.findIndex(round => round.status === 1);
+
+                // Se não encontrar ativa, mostra a última
+                if (activeRoundIndex === -1 && roundsArray.length > 0) {
+                    activeRoundIndex = roundsArray.length - 1;
+                }
+
+                // Cria as abas das rodadas
+                roundsArray.forEach((round, index) => {
+                    const roundTab = document.createElement('div');
+                    roundTab.classList.add('round-tab');
+                    if (index === activeRoundIndex) {
+                        roundTab.classList.add('active');
+                    }
+                    
+                    roundTab.setAttribute('data-round', round.id);
+                    roundTab.textContent = `Rodada ${index + 1}`;
+                    roundsContainer.appendChild(roundTab);
+
+                    // Adiciona evento de clique
+                    roundTab.addEventListener('click', () => {
+                        document.querySelectorAll('.round-tab').forEach(t => t.classList.remove('active'));
+                        roundTab.classList.add('active');
+                        loadRoundMatches(group, round.id);
+                    });
+                });
+
+                // Carrega a rodada ativa (ou última)
+                if (activeRoundIndex !== -1) {
+                    loadRoundMatches(group, roundsArray[activeRoundIndex].id);
+                }
+
+                // Carrega a classificação do grupo
+                loadGroupStandings(group);
+            });
+        }
+
+        function loadRoundMatches(group, roundId, roundNumber) {
+            const matchesRef = database.ref(`tournaments/supercopa/groups/rounds/${roundId}/matches`);
+            const matchesContainer = document.getElementById('matches-container');
+
+            matchesRef.once('value', (snapshot) => {
+                const matches = snapshot.val();
+                matchesContainer.innerHTML = '';
+
+                if (!matches) {
+                    matchesContainer.innerHTML = '<p>Nenhuma partida encontrada nesta rodada.</p>';
+                    return;
+                }
+
+                Object.entries(matches).forEach(([matchKey, match]) => {
+                    const matchCard = createMatchCard({
+                        player1Id: match.player1Id,
+                        player2Id: match.player2Id,
+                        result: match.result || '',
+                        roundNumber: roundNumber // Passa o número da rodada
+                    });
+                    
+                    matchesContainer.appendChild(matchCard);
+                });
+            });
+        }
+
+        // Improved createMatchCard function with additional details
+        function createMatchCard(match) {
+            const matchCard = document.createElement('div');
+            matchCard.classList.add('match-card');
+
+            const player1 = users[match.player1Id] || {};
+            const player2 = users[match.player2Id] || {};
+            const team1 = teams[player1.teamId] || {};
+            const team2 = teams[player2.teamId] || {};
+
+            // Função para encontrar o grupo do jogador
+            const findPlayerGroup = (playerId) => {
+                for (const [group, players] of Object.entries(groupPlayers)) {
+                    if (players.includes(playerId)) {
+                        return group.replace('group', 'Grupo '); // Converte "group1" para "Grupo 1"
+                    }
+                }
+                return 'Sem Grupo';
+            };
+
+            // Formata o resultado
+            let resultDisplay = 'Aguardando';
+            if (match.result) {
+                if (typeof match.result === 'string') {
+                    resultDisplay = match.result; // Exibe "3 x 1" etc.
+                } else if (typeof match.result === 'object') {
+                    resultDisplay = `${match.result.homeScore || '0'} x ${match.result.awayScore || '0'}`;
+                }
+            }
+
+            matchCard.innerHTML = `
+                <div class="match-status">Rodada ${match.roundNumber || '1'}</div>
+                <div class="match-players">
+                    <div class="match-player">
+                        <img src="${team1.image || 'default-team.png'}" alt="${player1.name || 'Jogador 1'}" class="team-logo">
+                        <div class="player-info">
+                            <p class="player-name">${player1.name || 'Jogador 1'}</p>
+                            <span class="player-group">${findPlayerGroup(match.player1Id)}</span>
+                        </div>
+                    </div>
+                    <div class="match-result">
+                        <p>${resultDisplay}</p>
+                    </div>
+                    <div class="match-player">
+                        <img src="${team2.image || 'default-team.png'}" alt="${player2.name || 'Jogador 2'}" class="team-logo">
+                        <div class="player-info">
+                            <p class="player-name">${player2.name || 'Jogador 2'}</p>
+                            <span class="player-group">${findPlayerGroup(match.player2Id)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return matchCard;
+        }
+
+        // Load group standings
+        function loadGroupStandings(group) {
+            const standingsRef = database.ref(`tournaments/supercopa/groups/standings`);
+            const tableBody = document.querySelector('#group-standings-table tbody');
+
+            standingsRef.once('value', (snapshot) => {
+                const standings = snapshot.val();
+                
+                if (!standings) {
+                    console.warn('No standings data found');
+                    tableBody.innerHTML = '<tr><td colspan="6">Sem dados de classificação</td></tr>';
+                    return;
+                }
+
+                // Filter standings by group
+                const groupPlayerIds = groupPlayers[group];
+                const groupStandings = Object.values(standings)
+                    .filter(standing => 
+                        standing.playerId && 
+                        standing.playerId !== '' && 
+                        groupPlayerIds.includes(standing.playerId)
+                    )
+                    .sort((a, b) => b.points - a.points);
+
+                tableBody.innerHTML = '';
+                groupStandings.forEach((standing, index) => {
+                    const player = users[standing.playerId] || {};
+                    const team = teams[player.teamId] || {};
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>
+                            <img src="${team.image || ''}" alt="${player.name || 'Jogador'}" class="team-logo">
+                            ${player.name || 'Jogador Desconhecido'}
+                        </td>
+                        <td>${standing.points || 0}</td>
+                        <td>${standing.games || 0}</td>
+                        <td>${standing.wins || 0}</td>
+                        <td>${(standing.goalsFor || 0) - (standing.goalsAg || 0)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+
+        // Load Quarter Finals
+        function loadQuarterFinals() {
+            const quartersRef = database.ref('tournaments/supercopa/quarterFinals/matches');
+            const matchesContainer = document.getElementById('quarters-matches');
+
+            quartersRef.once('value', (snapshot) => {
+                const matches = snapshot.val();
+                matchesContainer.innerHTML = '';
+
+                Object.keys(matches).forEach(matchKey => {
+                    const match = matches[matchKey];
+                    const matchCard = createKnockoutMatchCard(match);
+                    matchesContainer.appendChild(matchCard);
+                });
+            });
+        }
+
+        // Load Semi Finals
+        function loadSemiFinals() {
+            const semisRef = database.ref('tournaments/supercopa/semiFinals/matches');
+            const matchesContainer = document.getElementById('semis-matches');
+
+            semisRef.once('value', (snapshot) => {
+                const matches = snapshot.val();
+                matchesContainer.innerHTML = '';
+
+                Object.keys(matches).forEach(matchKey => {
+                    const match = matches[matchKey];
+                    const matchCard = createKnockoutMatchCard(match);
+                    matchesContainer.appendChild(matchCard);
+                });
+            });
+        }
+
+        // Create knockout stage match card
+        function createKnockoutMatchCard(match) {
+            const matchCard = document.createElement('div');
+            matchCard.classList.add('match-card');
+
+            const homePlayer = users[match.homeTeam] || {};
+            const awayPlayer = users[match.awayTeam] || {};
+            const homeTeam = teams[homePlayer.teamId] || {};
+            const awayTeam = teams[awayPlayer.teamId] || {};
+
+            matchCard.innerHTML = `
+                <div class="match-players">
+                    <div class="player1">
+                        <img src="${homeTeam.image || ''}" alt="${homePlayer.name || 'A Definir'}" class="team-logo">
+                        <p>${homePlayer.name || 'A Definir'}</p>
+                    </div>
+                    <div class="match-result">
+                        <p>${match.result || 'Não jogado'}</p>
+                    </div>
+                    <div class="player2">
+                        <img src="${awayTeam.image || ''}" alt="${awayPlayer.name || 'A Definir'}" class="team-logo">
+                        <p>${awayPlayer.name || 'A Definir'}</p>
+                    </div>
+                </div>
+            `;
+
+            return matchCard;
+        }
+
+        // Load Final
+        function loadFinal() {
+            const finalRef = database.ref('tournaments/supercopa/final');
+            const homeTeamLogo = document.getElementById('home-team-logo');
+            const awayTeamLogo = document.getElementById('away-team-logo');
+            const homeTeamName = document.getElementById('home-team-name');
+            const awayTeamName = document.getElementById('away-team-name');
+
+            finalRef.once('value', (snapshot) => {
+                const finalData = snapshot.val();
+                const homePlayer = users[finalData.homeTeam] || {};
+                const awayPlayer = users[finalData.awayTeam] || {};
+                const homeTeam = teams[homePlayer.teamId] || {};
+                const awayTeam = teams[awayPlayer.teamId] || {};
+
+                homeTeamLogo.src = homeTeam.image || '';
+                awayTeamLogo.src = awayTeam.image || '';
+                homeTeamName.textContent = homePlayer.name || 'A Definir';
+                awayTeamName.textContent = awayPlayer.name || 'A Definir';
+            });
+        }
+
+        // Stage data loading
+        function loadStageData(stage) {
+            fetchTeamsAndUsers().then(() => {
+                switch(stage) {
+                    case 'grupos':
+                        loadGroupRounds('group1');
+                        break;
+                    case 'quartas':
+                        loadQuarterFinals();
+                        break;
+                    case 'semis':
+                        loadSemiFinals();
+                        break;
+                    case 'final':
+                        loadFinal();
+                        break;
+                }
+            });
+        }
+
+        // Authentication check
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Load initial stage data
+                loadStageData('grupos');
+            }
+        });
+    </script>
+</body>
+</html>

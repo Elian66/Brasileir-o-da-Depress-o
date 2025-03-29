@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superliga - Detalhes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f0f2f5; 
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            margin-right: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .stage-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .standings-table th, .standings-table td {
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        /* Nova coluna de posição com retângulo fino */
+        .standings-table th:nth-child(1), .standings-table td:nth-child(1) {
+            width: 50px;
+            padding-left: 5px;
+            position: relative;
+        }
+
+        /* Posição com retângulo fino à esquerda */
+        .position-cell {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .position-bar {
+            width: 4px;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .position-number {
+            padding-left: 10px;
+        }
+
+        /* Ícone do time mais compacto */
+        .standings-table th:nth-child(2), .standings-table td:nth-child(2) {
+            width: 30px;
+            padding-right: 0;
+        }
+
+        .team-logo {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            margin-right: 8px;
+        }
+
+        /* Nome do jogador mais próximo do ícone */
+        .standings-table th:nth-child(3), .standings-table td:nth-child(3) {
+            padding-left: 0;
+            width: auto;
+        }
+
+        .standings-table th:nth-child(4), .standings-table td:nth-child(4) {
+            width: 80px;
+            text-align: right;
+        }
+
+        .standings-table th:nth-child(5), .standings-table td:nth-child(5) {
+            width: 80px;
+            text-align: right;
+        }
+
+        .standings-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .standings-table tr {
+            position: relative;
+        }
+        
+        /* Cores de fundo por posição */
+        .standings-table tr.top-4 {
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+        
+        .standings-table tr.position-5,
+        .standings-table tr.position-6 {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .standings-table tr.bottom-4 {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .standings-table td {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .green .position-bar { background-color: #2ecc71; }
+        .blue .position-bar { background-color: #3498db; }
+        .red .position-bar { background-color: #e74c3c; }
+        
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        #final-match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .match-team {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+        .final-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .team-logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .team-logo-final {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .vs {
+            font-size: 24px;
+            font-weight: bold;
+            margin-left: 32px;
+            margin-right: 32px;
+            color: #3498db;
+        }
+
+        #home-team-logo, #away-team-logo {
+            object-fit: cover;
+        }
+
+        #home-team-name, #away-team-name {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .team-logo-container img {
+            background-color: #e0e0e0;
+        }
+
+        .team-logo-container p {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .team-logo-container img[alt="Escudo do time"] {
+            display: block;
+            background-color: #dcdcdc;
+        }
+
+        .team-logo-container p {
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Superliga</h1>
+        <div class="tabs">
+            <div class="tab active" data-stage="abertura">Abertura</div>
+            <div class="tab" data-stage="clausura">Clausura</div>
+            <div class="tab" data-stage="final">Final</div>
+        </div>
+
+        <div id="stages">
+            <div class="stage-content" id="abertura-content">
+                <h2>Abertura</h2>
+                <div id="loading-abertura" class="loading">Carregando...</div>
+                <table class="standings-table" id="abertura-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th></th>
+                            <th>Jogador</th>
+                            <th>Pontos</th>
+                            <th>Round</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dados serão carregados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stage-content" id="clausura-content" style="display:none;">
+                <h2>Clausura</h2>
+                <div id="loading-clausura" class="loading">Carregando...</div>
+                <table class="standings-table" id="clausura-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th></th>
+                            <th>Jogador</th>
+                            <th>Pontos</th>
+                            <th>Round</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dados serão carregados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stage-content" id="final-content" style="display:none;">
+                <h2>Final</h2>
+                <div id="loading-final" class="loading">Carregando...</div>
+                <div id="final-match-info" style="display:none;">
+                    <div class="final-card">
+                        <div class="team">
+                            <div class="team-logo-container">
+                                <img id="home-team-logo" class="team-logo-final" src="" alt="Escudo do time">
+                                <p id="home-team-name">A Definir</p>
+                            </div>
+                        </div>
+                        <div class="vs">
+                            <h3>VS</h3>
+                        </div>
+                        <div class="team">
+                            <div class="team-logo-container">
+                                <img id="away-team-logo" class="team-logo-final" src="" alt="Escudo do time">
+                                <p id="away-team-name">A Definir</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBrIiwL2sUVEPc8YBzdkJxPVyVVC5QN1M",
+            authDomain: "brdepre.firebaseapp.com",
+            databaseURL: "https://brdepre-default-rtdb.firebaseio.com",
+            projectId: "brdepre",
+            storageBucket: "brdepre.firebasestorage.app",
+            messagingSenderId: "1077826896098",
+            appId: "1:1077826896098:web:abe2b07a280a4852649ebb",
+            measurementId: "G-4JXFEZ8DW6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Global variables to store data
+        const teams = {};
+        const users = {};
+
+        // Fetch teams and users before loading stage data
+        function fetchTeamsAndUsers() {
+            const teamsRef = database.ref('teams');
+            const usersRef = database.ref('users');
+
+            Promise.all([teamsRef.once('value'), usersRef.once('value')]).then(([teamsSnapshot, usersSnapshot]) => {
+                Object.assign(teams, teamsSnapshot.val());
+                Object.assign(users, usersSnapshot.val());
+            });
+        }
+
+        // Lógica de mudança de abas
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.stage-content').forEach(c => c.style.display = 'none');
+                tab.classList.add('active');
+                const stage = tab.getAttribute('data-stage');
+                document.getElementById(`${stage}-content`).style.display = 'block';
+                loadStageData(stage);
+            });
+        });
+
+        function renderStandings(stage, users) {
+            const tableBody = document.getElementById(`${stage}-table`).querySelector('tbody');
+            const loadingDiv = document.getElementById(`loading-${stage}`);
+            const table = document.getElementById(`${stage}-table`);
+
+            tableBody.innerHTML = '';
+            const sortedUsers = Object.values(users)
+                .filter(user => user[`pointsSuperliga${stage.charAt(0).toUpperCase() + stage.slice(1)}`] !== undefined)
+                .sort((a, b) => (b[`pointsSuperliga${stage.charAt(0).toUpperCase() + stage.slice(1)}`] || 0) - (a[`pointsSuperliga${stage.charAt(0).toUpperCase() + stage.slice(1)}`] || 0));
+
+            sortedUsers.forEach((user, index) => {
+                const team = teams[user.teamId];
+                const points = user[`pointsSuperliga${stage.charAt(0).toUpperCase() + stage.slice(1)}`] || 0;
+                const lastRoundPoints = user[`lastRoundPointsLiga${stage.charAt(0).toUpperCase() + stage.slice(1)}`] || 0;
+
+                let positionClass = '';
+                let rowClass = '';
+                
+                if (index < 4) {
+                    positionClass = 'green';
+                    rowClass = 'top-4';
+                } else if (index < 6) {
+                    positionClass = 'blue';
+                    rowClass = `position-${index+1}`;
+                } else if (index >= sortedUsers.length - 4) {
+                    positionClass = 'red';
+                    rowClass = 'bottom-4';
+                }
+
+                const row = document.createElement('tr');
+                if (rowClass) row.classList.add(rowClass);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="position-cell">
+                            <div class="position-bar ${positionClass}"></div>
+                            <span class="position-number">${index + 1}</span>
+                        </div>
+                    </td>
+                    <td><img src="${team.image}" alt="${team.name}" class="team-logo"></td>
+                    <td>${user.name}</td>
+                    <td>${points}</td>
+                    <td>${lastRoundPoints}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            loadingDiv.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        function loadStageData(stage) {
+            const stagesRef = database.ref(`tournaments/superliga/stages/${stage}`);
+            const loadingDiv = document.getElementById(`loading-${stage}`);
+            const tableBody = document.getElementById(`${stage}-table`)?.querySelector('tbody');
+
+            if (stage === 'final') {
+                loadFinalInfo();
+                return;
+            }
+
+            loadingDiv.style.display = 'block';
+            document.getElementById(`${stage}-table`).style.display = 'none';
+
+            if (Object.keys(teams).length === 0 || Object.keys(users).length === 0) {
+                fetchTeamsAndUsers();
+            }
+
+            stagesRef.once('value', (snapshot) => {
+                renderStandings(stage, users);
+            });
+        }
+
+        function loadFinalInfo() {
+            const finalRef = database.ref('tournaments/superliga/stages/final');
+            const finalMatchInfo = document.getElementById('final-match-info');
+            const loadingDiv = document.getElementById('loading-final');
+            const homeTeamLogo = document.getElementById('home-team-logo');
+            const awayTeamLogo = document.getElementById('away-team-logo');
+            const homeTeamName = document.getElementById('home-team-name');
+            const awayTeamName = document.getElementById('away-team-name');
+
+            // Show loading, hide final match info
+            loadingDiv.style.display = 'block';
+            finalMatchInfo.style.display = 'none';
+
+            finalRef.once('value', (snapshot) => {
+                const finalData = snapshot.val();
+                const homeTeamUserId = finalData?.homeTeam;
+                const awayTeamUserId = finalData?.awayTeam;
+
+                // Verifique se os IDs dos jogadores foram definidos
+                const homeTeamUser = homeTeamUserId ? users[homeTeamUserId] : null;
+                const awayTeamUser = awayTeamUserId ? users[awayTeamUserId] : null;
+
+                if (homeTeamUser && awayTeamUser) {
+                    // Obtenha os dados dos jogadores
+                    const homeTeam = teams[homeTeamUser.teamId];
+                    const awayTeam = teams[awayTeamUser.teamId];
+
+                    // Exibe os dados do time da casa
+                    homeTeamLogo.src = homeTeam.image;
+                    homeTeamName.textContent = `${homeTeamUser.name}`; // Nome do jogador e time
+
+                    // Exibe os dados do time visitante
+                    awayTeamLogo.src = awayTeam.image;
+                    awayTeamName.textContent = `${awayTeamUser.name}`; // Nome do jogador e time
+
+                    // Exibe o card com os times
+                    finalMatchInfo.style.display = 'flex';
+                } else {
+                    // Caso algum time não tenha sido definido, exibe o escudo cinza e "A Definir"
+                    homeTeamLogo.src = "https://cdn4.iconfinder.com/data/icons/flat-design-security-set-one/24/security-unknown-512.png";
+                    awayTeamLogo.src = "https://cdn4.iconfinder.com/data/icons/flat-design-security-set-one/24/security-unknown-512.png";
+
+                    homeTeamName.textContent = "A Definir";
+                    awayTeamName.textContent = "A Definir";
+
+                    // Exibe o card com a informação de "A Definir"
+                    finalMatchInfo.style.display = 'flex';
+                }
+
+                // Hide loading
+                loadingDiv.style.display = 'none';
+            });
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                fetchTeamsAndUsers();
+                loadStageData('abertura');
+            }
+        });
+    </script>
+</body>
+</html>

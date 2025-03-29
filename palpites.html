@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga de Palpites - Próxima Rodada</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reutilizando estilos da Home */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f0f2f5;
+            --card-background: white;
+            --text-color: #333;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .action-button:hover {
+            background-color: #2980b9;
+        }
+
+        .matches-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .match-card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .match-teams img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .prediction-inputs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px; /* Espaçamento entre os inputs */
+        }
+
+        .prediction-inputs input {
+            width: 80px;
+            height: 40px;
+            font-size: 18px;
+            padding: 5px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            color: #333;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .prediction-inputs input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+            outline: none;
+        }
+
+        .prediction-inputs span {
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .disabled-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .disabled-message {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Próxima Rodada</h1>
+            <div>
+                <a href="home.html" class="action-button">Voltar</a>
+            </div>
+        </div>
+
+        <div id="timer-container" class="timer"></div>
+        <div id="matches-container" class="matches-container">
+            <!-- Matches will be dynamically populated -->
+        </div>
+
+        <div class="disabled-overlay" id="disabled-overlay">
+            <div class="disabled-message">
+                <h2>Tempo de palpites encerrado</h2>
+                <p>O período para fazer palpites já expirou.</p>
+            </div>
+        </div>
+
+        <div class="action-container" style="margin-top: 20px; text-align: center;">
+            <button id="save-predictions" class="action-button">Salvar Palpites</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration (same as home page)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBrIiwL2sUVEPc8YBzdkJxPVyVVC5QN1M",
+            authDomain: "brdepre.firebaseapp.com",
+            databaseURL: "https://brdepre-default-rtdb.firebaseio.com",
+            projectId: "brdepre",
+            storageBucket: "brdepre.firebasestorage.app",
+            messagingSenderId: "1077826896098",
+            appId: "1:1077826896098:web:abe2b07a280a4852649ebb",
+            measurementId: "G-4JXFEZ8DW6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Authentication State Observer
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                fetchCurrentRound(user.uid);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function fetchCurrentRound(userId) {
+            const roundsRef = database.ref('rounds');
+            const matchesContainer = document.getElementById('matches-container');
+            const timerContainer = document.getElementById('timer-container');
+            const savePredictionsButton = document.getElementById('save-predictions');
+            const disabledOverlay = document.getElementById('disabled-overlay');
+
+            roundsRef.orderByChild('status').equalTo(1).limitToFirst(1).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(async (roundSnapshot) => {
+                        const roundData = roundSnapshot.val();
+                        const roundKey = roundSnapshot.key;
+                        const finishTimestamp = new Date(roundData.finishTimestamp);
+
+                        // Timer
+                        const timerInterval = setInterval(() => {
+                            const now = new Date();
+                            const timeLeft = finishTimestamp - now;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval);
+                                timerContainer.innerHTML = 'Tempo de palpites encerrado';
+                                
+                                // Substituir o botão de salvar palpites por uma mensagem
+                                savePredictionsButton.outerHTML = `
+                                    <div class="prediction-closed-message" style="text-align: center; color: #666; margin-top: 20px;">
+                                        Período de palpites encerrado. Você pode visualizar os palpites dos outros jogadores.
+                                    </div>
+                                `;
+
+                                // Adicionar botões de Ver Palpites para todos os jogos
+                                addViewPredictionsButtons(roundKey, finishTimestamp);
+                                return;
+                            }
+
+                            // Resto do código de timer continua igual
+                        }, 1000);
+
+                        const teamsRef = database.ref('teams');
+                        const matchesRef = database.ref(`rounds/${roundKey}/matches`);
+                        const predictionsRef = database.ref(`rounds/${roundKey}/matches`);
+
+                        // Fetch matches for this round
+                        const matchesSnapshot = await matchesRef.once('value');
+                        const matches = matchesSnapshot.val() || {};
+
+                        let matchesHtml = '';
+                        for (const matchId in matches) {
+                            const match = matches[matchId];
+                            
+                            // Fetch teams data
+                            const homeTeamSnapshot = await teamsRef.child(match.homeTeam).once('value');
+                            const awayTeamSnapshot = await teamsRef.child(match.awayTeam).once('value');
+                            const homeTeam = homeTeamSnapshot.val();
+                            const awayTeam = awayTeamSnapshot.val();
+
+                            // Fetch user's previous predictions for this match
+                            const userPrediction = match.predictions?.[userId] || { homeScore: '', awayScore: '' };
+
+                            matchesHtml += `
+                                <div class="match-card" data-match-id="${matchId}">
+                                    <div class="match-teams">
+                                        <div>
+                                            <img src="${homeTeam.image}" alt="${homeTeam.name}">
+                                            <p>${homeTeam.name}</p>
+                                        </div>
+                                        <p>vs</p>
+                                        <div>
+                                            <img src="${awayTeam.image}" alt="${awayTeam.name}">
+                                            <p>${awayTeam.name}</p>
+                                        </div>
+                                    </div>
+                                    <div class="prediction-inputs">
+                                        <input type="number" min="0" placeholder="Casa" 
+                                               data-team="home" 
+                                               value="${userPrediction.homeScore}">
+                                        <span>x</span>
+                                        <input type="number" min="0" placeholder="Fora" 
+                                               data-team="away" 
+                                               value="${userPrediction.awayScore}">
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        matchesContainer.innerHTML = matchesHtml;
+
+                        // Save predictions functionality
+                        savePredictionsButton.addEventListener('click', () => {
+                            const matchCards = document.querySelectorAll('.match-card');
+                            const predictions = {};
+                            const playerId = auth.currentUser.uid;
+
+                            matchCards.forEach(card => {
+                                const matchId = card.getAttribute('data-match-id');
+                                const homeInput = card.querySelector('input[data-team="home"]');
+                                const awayInput = card.querySelector('input[data-team="away"]');
+
+                                if (homeInput.value !== '' && awayInput.value !== '') {
+                                    predictions[matchId] = {
+                                        homeScore: parseInt(homeInput.value),
+                                        awayScore: parseInt(awayInput.value),
+                                        playerId: playerId
+                                    };
+                                }
+                            });
+
+                            // Save predictions to Firebase
+                            const userId = auth.currentUser.uid;
+                            database.ref(`rounds/${roundKey}/matches`).update(
+                                Object.keys(predictions).reduce((acc, matchId) => {
+                                    acc[`${matchId}/predictions/${userId}`] = predictions[matchId];
+                                    return acc;
+                                }, {})
+                            ).then(() => {
+                                alert('Palpites salvos com sucesso!');
+                            }).catch(error => {
+                                console.error('Erro ao salvar palpites:', error);
+                                alert('Erro ao salvar palpites. Tente novamente.');
+                            });
+                        });
+                        addViewPredictionsButtons(roundKey, finishTimestamp);
+                    });
+                } else {
+                    matchesContainer.innerHTML = '<p>Não há rodadas disponíveis no momento.</p>';
+                }
+            });
+        }
+
+        function createPredictionsDialog() {
+            const dialog = document.createElement('dialog');
+            dialog.innerHTML = `
+                <style>
+                    dialog {
+                        width: 400px;
+                        max-height: 500px;
+                        overflow-y: auto;
+                        border-radius: 10px;
+                        padding: 20px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .predictions-list {
+                        list-style-type: none;
+                        padding: 0;
+                    }
+                    .prediction-item {
+                        border-bottom: 1px solid #eee;
+                        padding: 10px 0;
+                    }
+                    .close-btn {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        background: none;
+                        border: none;
+                        font-size: 20px;
+                        cursor: pointer;
+                    }
+                </style>
+                <button class="close-btn">&times;</button>
+                <h2>Palpites para este jogo</h2>
+                <ul class="predictions-list"></ul>
+            `;
+            document.body.appendChild(dialog);
+            return dialog;
+        }
+
+        async function showPredictionsForMatch(roundKey, matchId) {
+            const dialog = document.querySelector('dialog') || createPredictionsDialog();
+            const predictionsList = dialog.querySelector('.predictions-list');
+            const closeBtn = dialog.querySelector('.close-btn');
+
+            // Limpar lista anterior
+            predictionsList.innerHTML = '';
+
+            try {
+                // Buscar todas as predições para este jogo
+                const predictionsSnapshot = await database.ref(`rounds/${roundKey}/matches/${matchId}/predictions`).once('value');
+                const predictions = predictionsSnapshot.val() || {};
+
+                // Buscar informações de todos os usuários
+                const usersSnapshot = await database.ref('users').once('value');
+                const users = usersSnapshot.val() || {};
+
+                // Popular lista de palpites
+                for (const [userId, prediction] of Object.entries(predictions)) {
+                    const user = users[userId] || { name: 'Usuário Anônimo' };
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('prediction-item');
+                    listItem.innerHTML = `
+                        <strong>${user.name}</strong>
+                        <p>Palpite: ${prediction.homeScore} x ${prediction.awayScore}</p>
+                    `;
+                    predictionsList.appendChild(listItem);
+                }
+
+                // Eventos de fechamento do diálogo
+                closeBtn.onclick = () => dialog.close();
+                dialog.onclick = (event) => {
+                    if (event.target === dialog) dialog.close();
+                };
+
+                // Abrir diálogo
+                dialog.showModal();
+            } catch (error) {
+                console.error('Erro ao buscar palpites:', error);
+                alert('Não foi possível carregar os palpites.');
+            }
+        }
+
+        function addViewPredictionsButtons(roundKey, finishTimestamp) {
+            const matchCards = document.querySelectorAll('.match-card');
+            const now = new Date();
+
+            matchCards.forEach(card => {
+                const matchId = card.getAttribute('data-match-id');
+                
+                // Só adicionar botão se o timestamp já passou
+                if (now > finishTimestamp) {
+                    const viewPredictionsBtn = document.createElement('button');
+                    viewPredictionsBtn.textContent = 'Ver Palpites';
+                    viewPredictionsBtn.classList.add('action-button');
+                    viewPredictionsBtn.style.marginTop = '10px';
+                    
+                    viewPredictionsBtn.addEventListener('click', () => {
+                        showPredictionsForMatch(roundKey, matchId);
+                    });
+
+                    card.appendChild(viewPredictionsBtn);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

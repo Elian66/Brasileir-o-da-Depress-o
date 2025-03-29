@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brasileirão da Depressão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f0f2f5;
+            --card-background: white;
+            --text-color: #333;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --loading-spinner-color: var(--primary-color);
+            --countdown-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-y: auto; /* Ensure vertical scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .container {
+            min-height: 100vh;
+            overflow-y: auto; /* Allow container to scroll */
+            padding-bottom: 50px; /* Extra padding for bottom content */
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                overflow-x: hidden; /* Prevent horizontal overflow */
+            }
+
+            .sections {
+                grid-template-columns: 1fr; /* Stack cards vertically on mobile */
+                gap: 15px;
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .user-profile img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        .user-info h2 {
+            margin-bottom: 5px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .user-info .team-info {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .user-info .team-info img {
+            width: 30px;
+            height: 30px;
+            margin-left: 10px;
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .section-card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .section-card h3 {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2em;
+            color: var(--text-color);
+        }
+
+        .section-card .status {
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-em-progresso {
+            background-color: #f1c40f;
+            color: white;
+        }
+
+        .status-finalizada {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .status-nao-iniciada {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+
+        .standings-table th, 
+        .standings-table td {
+            border-bottom: 1px solid #ecf0f1;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        .standings-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .standings-table tr.highlighted {
+            background-color: #f0f8ff;
+            font-weight: 500;
+        }
+
+        .standings-table .you-marker {
+            color: var(--primary-color);
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+        .action-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .action-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Screen Styles */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        #loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 300px;
+            padding: 30px;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(0,0,0,0.1);
+            border-top-color: var(--loading-spinner-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            font-size: 1.1em;
+            color: var(--text-color);
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        /* Countdown Timer Styles */
+        #countdown-timer {
+            font-weight: 700;
+            color: var(--countdown-color);
+            font-size: 1.1em;
+        }
+
+        /* Next Round Info Styles */
+        #next-round-info {
+            line-height: 1.7;
+        }
+
+        #next-round-info p {
+            margin-bottom: 8px;
+        }
+
+        #finish-time {
+            font-weight: 500;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .section-card {
+                padding: 15px;
+            }
+
+            .standings-table th, 
+            .standings-table td {
+                padding: 8px 5px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Card hover effect */
+        .section-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .section-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Info message in standings table */
+        .standings-info-message {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de loading -->
+    <div id="loading-screen" style="display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--background-color); z-index: 9999;">
+        <div style="text-align: center;">
+            <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="user-profile" id="user-profile">
+                <!-- User profile will be dynamically populated -->
+            </div>
+            <div>
+                <button class="action-button" id="logout-button">Sair</button>
+                <button class="action-button" id="admin-button" style="display:none;">Administração</button>
+            </div>
+        </div>
+
+        <div class="sections">
+            <div class="section-card" id="superliga-section" data-page="superliga.html">
+                <h3>
+                    Superliga 
+                    <span class="status status-em-progresso">Em Progresso</span>
+                </h3>
+                <table class="standings-table" id="superliga-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Jogador</th>
+                            <th>Pontos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamic standings will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-card" id="supercopa-section" data-page="supercopa.html">
+                <h3>
+                    Supercopa 
+                    <span class="status status-nao-iniciada">Não Iniciada</span>
+                </h3>
+                <p>Competição ainda não iniciada. Aguarde mais informações.</p>
+            </div>
+
+            <div class="section-card" id="palpites-section" data-page="palpites.html">
+                <h3>Próxima Rodada</h3>
+                <div id="next-round-info">
+                    <!-- Next round information will be dynamically populated -->
+                    <p>Nenhuma rodada disponível no momento.</p>
+                </div>
+                <button class="action-button" id="make-predictions-button">Fazer Palpites</button>
+            </div>
+
+            <div class="section-card" id="historico-section" data-page="historico.html">
+                <h3>Histórico</h3>
+                <div id="past-rounds">
+                    <!-- Past rounds will be dynamically populated -->
+                    <p>Nenhum histórico de rodadas disponível.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration (Replace with your own)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBrIiwL2sUVEPc8YBzdkJxPVyVVC5QN1M",
+            authDomain: "brdepre.firebaseapp.com",
+            databaseURL: "https://brdepre-default-rtdb.firebaseio.com",
+            projectId: "brdepre",
+            storageBucket: "brdepre.firebasestorage.app",
+            messagingSenderId: "1077826896098",
+            appId: "1:1077826896098:web:abe2b07a280a4852649ebb",
+            measurementId: "G-4JXFEZ8DW6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Cache de dados
+        let cachedData = {
+            userProfile: null,
+            superliga: null,
+            supercopa: null,
+            nextRound: null,
+            pastRounds: null
+        };
+
+        // Verificar autenticação
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = 'index.html';
+        }
+
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                // Limpa o localStorage e redireciona
+                localStorage.clear();
+                window.location.replace('index.html');
+            }).catch((error) => {
+                console.error('Erro ao sair:', error);
+            });
+        });
+
+        // Observer de autenticação com logs detalhados
+        auth.onAuthStateChanged((firebaseUser) => {
+            console.log('onAuthStateChanged fired');
+            console.log('Firebase User:', firebaseUser);
+
+            if (firebaseUser) {
+                console.log('Firebase User UID:', firebaseUser.uid);
+                
+                // Verificar se o usuário no localStorage corresponde ao usuário do Firebase
+                if (!user || user.uid !== firebaseUser.uid) {
+                    console.warn('Usuário no localStorage não corresponde ao usuário do Firebase');
+                    localStorage.setItem('user', JSON.stringify({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email
+                    }));
+                }
+
+                // Carregar perfil do usuário
+                loadUserProfile(firebaseUser.uid)
+                    .then(() => {
+                        console.log('User profile loaded successfully');
+                        // Continuar com outros carregamentos
+                        return loadSuperligaStandings();
+                    })
+                    .then(() => loadSupercopaInfo())
+                    .then(() => loadNextRound())
+                    .then(() => loadPastRounds())
+                    .then(() => checkAdminStatus(firebaseUser.uid))
+                    .then(() => document.getElementById('loading-screen').style.display = 'none')
+                    .catch((error) => {
+                        console.error('Erro no carregamento de dados:', error);
+                        document.getElementById('loading-screen').style.display = 'none';
+                    });
+            } else {
+                console.log('No user signed in');
+                window.location.href = 'index.html';
+            }
+        });
+
+        function loadUserProfile(userId) {
+            console.log('Loading user profile for:', userId);
+            
+            const userProfileRef = database.ref('users/' + userId);
+            const teamsRef = database.ref('teams');
+
+            return new Promise((resolve, reject) => {
+                userProfileRef.once('value')
+                    .then((userSnapshot) => {
+                        console.log('User snapshot:', userSnapshot.exists(), userSnapshot.val());
+                        
+                        if (!userSnapshot.exists()) {
+                            reject(new Error('Usuário não encontrado'));
+                            return;
+                        }
+
+                        const userData = userSnapshot.val();
+                        
+                        return teamsRef.child(userData.teamId).once('value')
+                            .then((teamSnapshot) => {
+                                console.log('Team snapshot:', teamSnapshot.exists(), teamSnapshot.val());
+                                
+                                if (!teamSnapshot.exists()) {
+                                    reject(new Error('Time não encontrado'));
+                                    return;
+                                }
+
+                                const profileData = {
+                                    id: userId,
+                                    userData: userData,
+                                    teamData: teamSnapshot.val()
+                                };
+
+                                cachedData.userProfile = profileData;
+                                updateUserProfileUI(profileData);
+                                resolve(profileData);
+                            });
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao carregar perfil do usuário:', error);
+                        reject(error);
+                    });
+            });
+        }
+
+        function updateUserProfileUI(profileData) {
+            const userProfileElement = document.getElementById('user-profile');
+            userProfileElement.innerHTML = `
+                <img src="${profileData.teamData.image || 'default-avatar.png'}" alt="Team Logo">
+                <div class="user-info">
+                    <h2>${profileData.userData.name}</h2>
+                    <div class="team-info">
+                        ${profileData.teamData.name} (${profileData.userData.abbr})
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadSuperligaStandings() {
+            if (cachedData.superliga) {
+                updateSuperligaUI(cachedData.superliga);
+                return Promise.resolve();
+            }
+
+            const usersRef = database.ref('users');
+            const superligaStagesRef = database.ref('tournaments/superliga/stages');
+            const currentUser = auth.currentUser;
+
+            return superligaStagesRef.once('value').then((snapshot) => {
+                let status = "";
+                snapshot.forEach((childSnapshot) => {
+                    const stageData = childSnapshot.val();
+                    if (stageData.status === 1) {
+                        status = childSnapshot.key;
+                    }
+                });
+
+                const pointsField = (status === 'abertura') ? 'pointsSuperligaAbertura' : 
+                                 (status === 'clausura') ? 'pointsSuperligaClausura' : 
+                                 'pointsSuperligaClausura';
+
+                return usersRef.once('value').then((snapshot) => {
+                    const allUsers = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const userData = childSnapshot.val();
+                        if (userData[pointsField] !== undefined) {
+                            allUsers.push({
+                                id: childSnapshot.key,
+                                name: userData.name,
+                                points: userData[pointsField] || 0,
+                                lastRoundPoints: userData.lastRoundPointsLigaAbertura || 0
+                            });
+                        }
+                    });
+
+                    // Ordenar por pontos e depois por pontos da última rodada
+                    allUsers.sort((a, b) => {
+                        if (b.points === a.points) {
+                            return b.lastRoundPoints - a.lastRoundPoints;
+                        }
+                        return b.points - a.points;
+                    });
+
+                    const standingsData = {
+                        allUsers: allUsers,
+                        currentUser: currentUser.uid,
+                        pointsField: pointsField
+                    };
+
+                    cachedData.superliga = standingsData;
+                    updateSuperligaUI(standingsData);
+                });
+            });
+        }
+
+        function updateSuperligaUI(standingsData) {
+            const tableBody = document.querySelector('#superliga-table tbody');
+            const { allUsers, currentUser } = standingsData;
+            
+            // Encontrar a posição do usuário atual
+            const currentUserIndex = allUsers.findIndex(user => user.id === currentUser);
+            
+            // Determinar quais linhas mostrar
+            let rowsToShow = [];
+            if (currentUserIndex === 0) {
+                // Primeiro lugar: mostra ele + 2 abaixo
+                rowsToShow = allUsers.slice(0, 3);
+            } else if (currentUserIndex === allUsers.length - 1) {
+                // Último lugar: mostra ele + 2 acima
+                rowsToShow = allUsers.slice(-3);
+            } else {
+                // Meio da tabela: mostra 1 acima, ele, e 1 abaixo
+                rowsToShow = allUsers.slice(Math.max(0, currentUserIndex - 1), currentUserIndex + 2);
+            }
+
+            // Atualizar a tabela
+            tableBody.innerHTML = rowsToShow.map((user, indexInSlice) => {
+                const actualPosition = allUsers.findIndex(u => u.id === user.id) + 1;
+                const isCurrentUser = user.id === currentUser;
+                
+                return `
+                    <tr ${isCurrentUser ? 'style="background-color: #f0f8ff;"' : ''}>
+                        <td>${actualPosition}</td>
+                        <td>${user.name}</td>
+                        <td>${user.points}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Adicionar mensagem informando que é uma visualização parcial
+            if (allUsers.length > 3) {
+                const infoRow = document.createElement('tr');
+                infoRow.innerHTML = `<td colspan="3" style="text-align: center; font-size: 0.8em; color: #666;">
+                    Mostrando apenas sua posição e jogadores próximos. Clique para ver a tabela completa.
+                </td>`;
+                tableBody.appendChild(infoRow);
+            }
+        }
+
+        function loadSupercopaInfo() {
+            console.log('oi1')
+            if (cachedData.supercopa) {
+                updateSupercopaUI(cachedData.supercopa);
+                return Promise.resolve();
+            }
+
+            const currentUser = auth.currentUser;
+            const supercopaRef = database.ref('tournaments/supercopa');
+            
+            return supercopaRef.once('value').then((snapshot) => {
+                const supercopaData = snapshot.val();
+                cachedData.supercopa = { data: supercopaData, currentUser: currentUser.uid };
+                updateSupercopaUI(cachedData.supercopa);
+            });
+        }
+
+        function updateSupercopaUI(supercopaInfo) {
+            const supercopaSection = document.getElementById('supercopa-section');
+            const { data: supercopaData, currentUser } = supercopaInfo;
+            
+            // Verificar status da Supercopa
+            if (supercopaData.groups && supercopaData.groups.status === 1) {
+                // Encontrar em qual grupo o usuário está
+                let userGroup = null;
+                for (const group in supercopaData.groups) {
+                    if (group.includes('group') && 
+                        supercopaData.groups[group].includes(currentUser)) {
+                        userGroup = group;
+                        break;
+                    }
+                }
+                
+                if (userGroup) {
+                    // Atualizar o card da Supercopa para mostrar informações do grupo
+                    const groupNameMap = {
+                        'group1': 'Grupo A',
+                        'group2': 'Grupo B',
+                        'group3': 'Grupo C',
+                        'group4': 'Grupo D'
+                    };
+                    
+                    supercopaSection.innerHTML = `
+                        <h3>
+                            Supercopa 
+                            <span class="status status-em-progresso">Em Progresso</span>
+                        </h3>
+                        <p>Você está no ${groupNameMap[userGroup]}</p>
+                        <p>Clique para ver os detalhes do seu grupo.</p>
+                    `;
+                } else {
+                    supercopaSection.innerHTML = `
+                        <h3>
+                            Supercopa 
+                            <span class="status status-em-progresso">Em Progresso</span>
+                        </h3>
+                        <p>Você não está participando desta edição da Supercopa.</p>
+                    `;
+                }
+            } else {
+                // Supercopa não iniciada
+                supercopaSection.innerHTML = `
+                    <h3>
+                        Supercopa 
+                        <span class="status status-nao-iniciada">Não Iniciada</span>
+                    </h3>
+                    <p>Competição ainda não iniciada. Aguarde mais informações.</p>
+                `;
+            }
+        }
+
+        function loadNextRound() {
+            console.log('oi2')
+            if (cachedData.nextRound) {
+                updateNextRoundUI(cachedData.nextRound);
+                startCountdown(cachedData.nextRound.finishTimestamp);
+                return Promise.resolve();
+            }
+
+            const roundsRef = database.ref('rounds');
+            
+            return roundsRef.orderByChild('status').equalTo(1).limitToFirst(1).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const roundData = childSnapshot.val();
+                        cachedData.nextRound = roundData;
+                        updateNextRoundUI(roundData);
+                        startCountdown(roundData.finishTimestamp);
+                    });
+                } else {
+                    document.getElementById('next-round-info').innerHTML = '<p>Nenhuma rodada disponível no momento</p>';
+                    document.getElementById('make-predictions-button').disabled = true;
+                }
+            });
+        }
+
+        function updateNextRoundUI(roundData) {
+            const nextRoundInfo = document.getElementById('next-round-info');
+            const makePredictionsButton = document.getElementById('make-predictions-button');
+            
+            // Converter para AMZ (Amazon Time = UTC-4)
+            const finishDate = new Date(roundData.finishTimestamp);
+            finishDate.setHours(finishDate.getHours() - 4); // Ajuste para AMZ
+            
+            nextRoundInfo.innerHTML = `
+                <p>Rodada em andamento</p>
+                <p>Limite para palpites: <span id="finish-time">${finishDate.toLocaleString('pt-BR')}</span></p>
+                <p>Tempo restante: <span id="countdown-timer">calculando...</span></p>
+            `;
+            makePredictionsButton.disabled = false;
+        }
+
+        function startCountdown(finishTimestamp) {
+            const countdownElement = document.getElementById('countdown-timer');
+            if (!countdownElement) return;
+
+            const updateCountdown = () => {
+                const now = new Date();
+                const end = new Date(finishTimestamp);
+                end.setHours(end.getHours() - 4); // Ajuste para AMZ
+                
+                const diff = end - now;
+                
+                if (diff <= 0) {
+                    countdownElement.textContent = "Tempo esgotado!";
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                countdownElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            };
+            
+            updateCountdown();
+            const interval = setInterval(updateCountdown, 1000);
+        }
+
+        function loadPastRounds() {
+            console.log('oi3')
+            if (cachedData.pastRounds) {
+                updatePastRoundsUI(cachedData.pastRounds);
+                return Promise.resolve();
+            }
+
+            const roundsRef = database.ref('rounds');
+            
+            return roundsRef.orderByChild('status').equalTo(2).limitToLast(5).once('value').then((snapshot) => {
+                const pastRounds = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        pastRounds.push(childSnapshot.val());
+                    });
+                }
+                cachedData.pastRounds = pastRounds;
+                updatePastRoundsUI(pastRounds);
+            });
+        }
+
+        function updatePastRoundsUI(pastRounds) {
+            const pastRoundsElement = document.getElementById('past-rounds');
+            
+            if (pastRounds.length > 0) {
+                const roundsHtml = pastRounds.reverse().map(roundData => `
+                    <div>
+                        <strong>Rodada ${roundData.id}</strong>
+                        <p>Torneios: ${roundData.tournaments.join(', ')}</p>
+                        <p>Finalizada em: ${new Date(roundData.finishTimestamp).toLocaleString()}</p>
+                    </div>
+                `).join('<hr>');
+                pastRoundsElement.innerHTML = roundsHtml;
+            } else {
+                pastRoundsElement.innerHTML = '<p>Nenhum histórico de rodadas disponível.</p>';
+            }
+        }
+
+        // Add event listener for making predictions
+        document.getElementById('make-predictions-button').addEventListener('click', () => {
+            window.location.href = 'palpites.html';
+        });
+
+        document.querySelectorAll('.section-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const page = card.getAttribute('data-page');
+                if (page) {
+                    window.location.href = page;
+                }
+            });
+        });
+
+        // Verificar se o usuário é admin
+        function checkAdminStatus(userId) {
+            console.log('oi4')
+            if (cachedData.userProfile && cachedData.userProfile.userData.isAdmin !== undefined) {
+                updateAdminButton(cachedData.userProfile.userData.isAdmin);
+                return Promise.resolve();
+            }
+
+            const userRef = database.ref('users/' + userId);
+            
+            return userRef.once('value').then((snapshot) => {
+                const userData = snapshot.val();
+                if (cachedData.userProfile) {
+                    cachedData.userProfile.userData.isAdmin = userData.isAdmin;
+                }
+                updateAdminButton(userData.isAdmin);
+            });
+        }
+
+        function updateAdminButton(isAdmin) {
+            const adminButton = document.getElementById('admin-button');
+            if (isAdmin) {
+                adminButton.style.display = 'inline-block';
+                adminButton.addEventListener('click', () => {
+                    window.location.href = 'admin.html';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
