@@ -496,11 +496,16 @@
     
         // Verificar se o usuário já está autenticado
         auth.onAuthStateChanged(user => {
-            if (user) {
-                // Se o usuário estiver autenticado, redireciona para a home
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromHome = urlParams.get('fromHome');
+            
+            if (user && !fromHome) {
+                localStorage.setItem('user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email
+                }));
                 window.location.href = 'home.html';
             } else {
-                // Caso contrário, exibe o formulário de login normalmente
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
                 recoverForm.style.display = 'none';
