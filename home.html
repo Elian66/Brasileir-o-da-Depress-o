@@ -436,6 +436,9 @@
             });
         });
 
+        // Recuperar usuário do localStorage
+        let user = JSON.parse(localStorage.getItem('user') || 'null');
+
         // Observer de autenticação com logs detalhados
         auth.onAuthStateChanged((firebaseUser) => {
             console.log('onAuthStateChanged fired');
@@ -447,10 +450,11 @@
                 // Verificar se o usuário no localStorage corresponde ao usuário do Firebase
                 if (!user || user.uid !== firebaseUser.uid) {
                     console.warn('Usuário no localStorage não corresponde ao usuário do Firebase');
-                    localStorage.setItem('user', JSON.stringify({
+                    user = {
                         uid: firebaseUser.uid,
                         email: firebaseUser.email
-                    }));
+                    };
+                    localStorage.setItem('user', JSON.stringify(user));
                 }
 
                 // Carregar perfil do usuário
